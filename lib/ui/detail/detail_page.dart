@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_blog_app/data/model/post.dart';
+import 'package:flutter_firebase_blog_app/ui/detail/detail_view_model.dart';
 import 'package:flutter_firebase_blog_app/ui/write/write_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DetailPage extends StatelessWidget {
+class DetailPage extends ConsumerWidget {
+  DetailPage(this.post);
+
+  Post post;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(detailViewModelProvider(post));
+
     return Scaffold(
       appBar: AppBar(
         actions: [
-          iconButton(Icons.delete, () {
+          iconButton(Icons.delete, () async {
             print('삭제 아이콘 터치');
+            final vm = ref.read(detailViewModelProvider(post).notifier);
+            final result = await vm.deletePost();
+            if (result) {
+              Navigator.pop(context);
+            }
           }),
           iconButton(
             Icons.edit,
@@ -25,7 +39,7 @@ class DetailPage extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 500),
         children: [
           Image.network(
-            'https://picsum.photos/200/300',
+            post.imageUrl,
             fit: BoxFit.cover,
           ),
           SizedBox(
@@ -37,7 +51,7 @@ class DetailPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Today I Learned',
+                  post.title,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -47,7 +61,7 @@ class DetailPage extends StatelessWidget {
                   height: 14,
                 ),
                 Text(
-                  '이지원',
+                  post.writer,
                   style: TextStyle(
                     fontSize: 16,
                   ),
@@ -56,7 +70,7 @@ class DetailPage extends StatelessWidget {
                   height: 5,
                 ),
                 Text(
-                  '2024.08.08 20:30',
+                  post.createdAt.toIso8601String(),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w200,
@@ -66,7 +80,7 @@ class DetailPage extends StatelessWidget {
                   height: 14,
                 ),
                 Text(
-                  'Flutter 그리드 뷰를 배웠습니다.' * 10,
+                  post.content,
                   style: TextStyle(
                     fontSize: 16,
                   ),

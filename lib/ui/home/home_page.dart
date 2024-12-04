@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_blog_app/data/model/post.dart';
 import 'package:flutter_firebase_blog_app/ui/detail/detail_page.dart';
+import 'package:flutter_firebase_blog_app/ui/home/hoem_view_model.dart';
 import 'package:flutter_firebase_blog_app/ui/write/write_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomePage extends StatelessWidget {
   @override
@@ -36,16 +39,22 @@ class HomePage extends StatelessWidget {
             SizedBox(
               height: 20,
             ),
-            Expanded(
-              child: ListView.separated(
-                itemCount: 10,
-                separatorBuilder: (context, index) => SizedBox(
-                  height: 10,
-                ),
-                itemBuilder: (context, index) {
-                  return item();
-                },
-              ),
+            Consumer(
+              builder: (context, ref, child) {
+                final posts = ref.watch(HoemViewModelProvider);
+                return Expanded(
+                  child: ListView.separated(
+                    itemCount: posts.length,
+                    separatorBuilder: (context, index) => SizedBox(
+                      height: 10,
+                    ),
+                    itemBuilder: (context, index) {
+                      final post = posts[index];
+                      return item(post);
+                    },
+                  ),
+                );
+              },
             )
           ],
         ),
@@ -53,7 +62,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget item() {
+  Widget item(Post post) {
     return Builder(builder: (context) {
       return GestureDetector(
         onTap: () {
@@ -61,7 +70,7 @@ class HomePage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) {
-                return DetailPage();
+                return DetailPage(post);
               },
             ),
           );
@@ -78,7 +87,7 @@ class HomePage extends StatelessWidget {
                   child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: Image.network(
-                        'https://picsum.photos/200/300',
+                        post.imageUrl,
                         fit: BoxFit.cover,
                       ))),
               Container(
@@ -93,7 +102,7 @@ class HomePage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Today I Learned',
+                      post.title,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -102,7 +111,7 @@ class HomePage extends StatelessWidget {
                     Spacer(),
                     Text(
                       overflow: TextOverflow.ellipsis,
-                      'Flutter 그리드 뷰를 배웠습니다. Flutter 그리드 뷰를 배웠습니다. Flutter 그리드 뷰를 배웠습니다.',
+                      post.content,
                       style: TextStyle(
                         color: Colors.grey,
                         fontSize: 12,
@@ -110,7 +119,7 @@ class HomePage extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '2024.08.08 20:30',
+                      post.createdAt.toIso8601String(),
                       style: TextStyle(
                         color: Colors.grey,
                         fontSize: 12,
