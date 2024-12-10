@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_blog_app/data/model/post.dart';
+import 'package:flutter_firebase_blog_app/ui/write/wirte_view_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
-class WritePage extends StatefulWidget {
+class WritePage extends ConsumerStatefulWidget {
+  WritePage(this.post);
+
+  Post? post;
+
   @override
-  State<WritePage> createState() => _WritePageState();
+  ConsumerState<WritePage> createState() => _WritePageState();
 }
 
-class _WritePageState extends State<WritePage> {
+class _WritePageState extends ConsumerState<WritePage> {
   //작성자, 제목, 내용
-  TextEditingController writeController = TextEditingController();
-  TextEditingController titleController = TextEditingController();
-  TextEditingController contentController = TextEditingController();
+  late TextEditingController writeController = TextEditingController(
+    text: widget.post?.writer ?? '',
+  );
+  late TextEditingController titleController = TextEditingController(
+    text: widget.post?.title ?? '',
+  );
+  late TextEditingController contentController = TextEditingController(
+    text: widget.post?.content ?? '',
+  );
 
   GlobalKey<FormState> formkey = GlobalKey<FormState>();
 
@@ -23,6 +37,14 @@ class _WritePageState extends State<WritePage> {
 
   @override
   Widget build(BuildContext context) {
+    final wirteState = ref.watch(writeViewModelProvider(widget.post));
+    if (wirteState.isWriting) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -31,9 +53,21 @@ class _WritePageState extends State<WritePage> {
         appBar: AppBar(
           actions: [
             GestureDetector(
-              onTap: () {
+              onTap: () async {
                 print('완료 터치됨');
                 final result = formkey.currentState?.validate() ?? false;
+                if (result) {
+                  final vm =
+                      ref.read(writeViewModelProvider(widget.post).notifier);
+                  final insertResult = await vm.insert(
+                    writer: writeController.text,
+                    title: titleController.text,
+                    content: contentController.text,
+                  );
+                  if (insertResult) {
+                    Navigator.pop(context);
+                  }
+                }
               },
               child: Container(
                 height: 50,
@@ -110,11 +144,21 @@ class _WritePageState extends State<WritePage> {
                 ),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    color: Colors.grey,
-                    child: Icon(Icons.image),
+                  child: GestureDetector(
+                    onTap: () async {
+                      //1. 이미지 피커 객체 생성
+                      ImagePicker imagePicker = ImagePicker();
+                      //2. 이미지 피커 객체의 pickimage라는 매서드 호출
+                      XFile? xfile = await imagePicker.pickImage(
+                          source: ImageSource.gallery);
+                      print('경로: ${xfile?.path}');
+                    },
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.grey,
+                      child: Icon(Icons.image),
+                    ),
                   ),
                 )
               ],

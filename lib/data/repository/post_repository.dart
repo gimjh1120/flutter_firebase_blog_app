@@ -122,4 +122,41 @@ class PostRepository {
       return false;
     }
   }
+
+  Stream<List<Post>> postListStream() {
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef =
+        firestore.collection('posts').orderBy('createdAt', descending: true);
+    //stream <-
+    final stream = collectionRef.snapshots();
+    final newStream = stream.map(
+      (event) {
+        return event.docs.map((e) {
+          return Post.formJson({
+            'id': e.id,
+            ...e.data(),
+          });
+        }).toList();
+      },
+    );
+
+    return newStream;
+  }
+
+  Stream<Post?> postStream(String id) {
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef = firestore.collection('posts');
+    final docRef = collectionRef.doc(id);
+    final stream = docRef.snapshots();
+    final newStream = stream.map((e) {
+      if (e.data() == null) {
+        return null;
+      }
+      return Post.formJson({
+        'id': e.id,
+        ...e.data()!,
+      });
+    });
+    return newStream;
+  }
 }

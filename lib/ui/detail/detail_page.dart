@@ -28,7 +28,7 @@ class DetailPage extends ConsumerWidget {
             Icons.edit,
             () {
               Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return WritePage();
+                return WritePage(post);
               }));
               print('수정 아이콘 터치');
             },
